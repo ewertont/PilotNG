@@ -1,4 +1,5 @@
 import pytesseract
+import platform
 import numpy as np
 from typing import Union
 import src.repositories.actionBar.extractors as actionBarExtractors
@@ -8,7 +9,11 @@ import src.utils.core as coreUtils
 from .config import hashes, images
 from skimage import exposure
 
-pytesseract.pytesseract.tesseract_cmd = "C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
+# Configura o caminho do tesseract conforme o SO
+# No Linux (apt install tesseract-ocr), o binário fica em /usr/bin/tesseract automaticamente
+if platform.system() == 'Windows':
+    pytesseract.pytesseract.tesseract_cmd = "C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
+
 
 # TODO: add unit tests
 # PERF: [0.04209370000000012, 9.999999999621423e-06]

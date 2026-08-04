@@ -1,6 +1,5 @@
-import pygetwindow as gw
+import platform
 import re
-import win32gui
 import customtkinter
 import tkinter as tk
 from ..utils import genRanStr
@@ -194,13 +193,45 @@ class ConfigPage(customtkinter.CTkToplevel):
         self.saveConfigFrame.columnconfigure(1, weight=1)
 
     def getGameWindows(self):
-        def enum_windows_callback(hwnd, results):
-            if win32gui.IsWindowVisible(hwnd):
-                window_title = win32gui.GetWindowText(hwnd)
-                if re.search(r"Windowed", window_title, re.IGNORECASE):
-                    results.append(window_title)
+        system = platform.system()
         results = []
-        win32gui.EnumWindows(enum_windows_callback, results)
+        if system == 'Linux':
+            try:
+                from Xlib import display as xdisplay
+                d = xdisplay.Display()
+                root = d.screen().root
+
+                def _collect(win):
+                    try:
+                        name = win.get_wm_name() or ''
+                        if re.search(r"Tibia", name, re.IGNORECASE):
+                            results.append(name)
+                    except Exception:
+                        pass
+                    try:
+                        for child in win.query_tree().children:
+                            _collect(child)
+                    except Exception:
+                        pass
+
+                _collect(root)
+                d.close()
+            except Exception as e:
+                print(f'[config] Erro ao listar janelas via Xlib: {e}')
+        else:
+            try:
+                import win32gui
+                import pygetwindow as gw
+
+                def enum_windows_callback(hwnd, res):
+                    if win32gui.IsWindowVisible(hwnd):
+                        window_title = win32gui.GetWindowText(hwnd)
+                        if re.search(r"Windowed", window_title, re.IGNORECASE):
+                            res.append(window_title)
+
+                win32gui.EnumWindows(enum_windows_callback, results)
+            except Exception as e:
+                print(f'[config] Erro ao listar janelas via win32gui: {e}')
         return results
 
     def refreshWindows(self):
@@ -208,8 +239,17 @@ class ConfigPage(customtkinter.CTkToplevel):
 
     def onChangeWindow(self, _):
         selectedWindow = self.windowsCombobox.get()
-        self.context.context['window'] = gw.getWindowsWithTitle(selectedWindow)[
-            0]
+        system = platform.system()
+        if system == 'Linux':
+            # No Linux a janela já foi localizada pelo middleware window.py
+            # Aqui apenas armazenamos o título selecionado; o middleware resolve
+            self.context.context['window'] = None  # força re-detecção no próximo ciclo
+        else:
+            try:
+                import pygetwindow as gw
+                self.context.context['window'] = gw.getWindowsWithTitle(selectedWindow)[0]
+            except Exception as e:
+                print(f'[config] Erro ao obter janela: {e}')
         
     def onChangeShovelHotkey(self, event):
         key = event.char

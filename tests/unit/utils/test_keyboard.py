@@ -1,32 +1,37 @@
 from src.utils.keyboard import hotkey, keyDown, keyUp, press, write
+from pynput.keyboard import Key
 
 
 def test_should_call_hotkey(mocker):
-    hotkeys = ['a', 'b']
-    hotkeySpy =  mocker.patch('pyautogui.hotkey')
-    hotkey(hotkeys)
-    hotkeySpy.assert_called_once_with(hotkeys)
+    press_spy = mocker.patch('src.utils.keyboard._keyboard.press')
+    release_spy = mocker.patch('src.utils.keyboard._keyboard.release')
+    hotkey('ctrl', 'a')
+    assert press_spy.call_count == 2
+    assert release_spy.call_count == 2
+
 
 def test_should_call_keyDown(mocker):
-    hotkey = 'a'
-    keyDownSpy =  mocker.patch('pyautogui.keyDown')
-    keyDown(hotkey)
-    keyDownSpy.assert_called_once_with(hotkey)
+    press_spy = mocker.patch('src.utils.keyboard._keyboard.press')
+    keyDown('a')
+    press_spy.assert_called_once_with('a')
+
 
 def test_should_call_keyUp(mocker):
-    hotkey = 'a'
-    keyUpSpy =  mocker.patch('pyautogui.keyUp')
-    keyUp(hotkey)
-    keyUpSpy.assert_called_once_with(hotkey)
+    release_spy = mocker.patch('src.utils.keyboard._keyboard.release')
+    keyUp('a')
+    release_spy.assert_called_once_with('a')
 
-def test_should_call_hotkey(mocker):
-    hotkeys = ['a', 'b']
-    pressSpy =  mocker.patch('pyautogui.press')
-    press(hotkeys)
-    pressSpy.assert_called_once_with(hotkeys)
+
+def test_should_call_press(mocker):
+    press_spy = mocker.patch('src.utils.keyboard._keyboard.press')
+    release_spy = mocker.patch('src.utils.keyboard._keyboard.release')
+    press('a')
+    press_spy.assert_called_once_with('a')
+    release_spy.assert_called_once_with('a')
+
 
 def test_should_call_write(mocker):
     phrase = 'hello world!'
-    writeSpy =  mocker.patch('pyautogui.write')
+    type_spy = mocker.patch('src.utils.keyboard._keyboard.type')
     write(phrase)
-    writeSpy.assert_called_once_with(phrase)
+    type_spy.assert_called_once_with(phrase)

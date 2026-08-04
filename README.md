@@ -60,36 +60,47 @@ This bot needs good processing power to work properly (fast) i tested it with we
 
 THE BOT ONLY WORKS IN 1920X1080 RESOLUTION
 
-TESTED ONLY ON WIN10
+### Windows
 
-- [PYTHON 3.11.7](https://www.python.org/downloads/release/python-3117/)
+- [PYTHON 3.11.x](https://www.python.org/downloads/release/python-3117/)
 - [POETRY](https://python-poetry.org/)
 - [TESSERACT-WINDOWS](https://github.com/UB-Mannheim/tesseract/wiki)
 - [VIRTUAL DISPLAY](https://www.amyuni.com/downloads/usbmmidd_v2.zip&v=ybHKFZjSkVY)
 - [OBS](https://obsproject.com/pt-br/download)
+- Arduino Leonardo (para simular inputs HID)
 
-COMMANDS TO ACTIVATE THE VIRTUAL DISPLAY:
+### 🐧 Linux (Linux Lite / Ubuntu-based)
 
-- Extract the file, then:
+> ✅ No Linux **não é necessário** OBS, Virtual Display nem Arduino.
+> O bot captura a tela diretamente via `mss` (X11) e simula inputs via `pynput`.
 
-```bash
-cd C:\DIRECTORY\OF\EXTRACTED\FOLDER
-deviceinstaller64 install usbmmidd.inf usbmmidd
-```
-
--Add virtual display:
+**Dependências do sistema:**
 
 ```bash
-deviceinstaller64 enableidd 1
+# Python 3.11
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt update
+sudo apt install -y python3.11 python3.11-dev python3.11-tk
+
+# Dependências X11 para pynput e mss
+sudo apt install -y python3-xlib xdotool libxtst6
+
+# Tesseract OCR
+sudo apt install -y tesseract-ocr
+
+# Poetry
+curl -sSL https://install.python-poetry.org | python3 -
 ```
 
-Once you have the second monitor activated, make sure your resolution is 1920x1080, then just open obs, add a game capture, select tibia and remove the pointer, then just open the game capture in windowed mode and click to maximise the window (windowed fullscreen)
+**Tibia (cliente nativo Linux):**
 
-OBS: If you have more than one physical screen, switch them all off and stick with just one
+```bash
+# Baixe o AppImage no site oficial: https://www.tibia.com/news/?subtopic=newsarchive
+chmod +x Tibia.AppImage
+./Tibia.AppImage
+```
 
-🔴 **IMPORTANT** YOU NEED TO REMOVE THE POINTER FROM THE OBS GAME CAPTURE, OTHERWISE IT MAY RESULT IN BUGS
-
-⚠️ **OPTIONAL** IF YOU WANT, SPOOF THE VIRTUAL DISPLAY FOR LESS DETECTION
+> ⚠️ Configure o Tibia em resolução **1920x1080** conforme as imagens na seção de configuração abaixo.
 
 ## 🔴 TIBIA CONFIG REQUIREMENTS
 
@@ -113,23 +124,41 @@ YOU NEED TO USE THIS CONFIGS IN YOUR CLIENT, OTHERWISE WILL NOT WORK
 
 🔴 USE AT YOUR OWN RISK
 
-- DOWNLOAD AND INSTALL THE SOFTWARE DEPENDENCIES
+### Windows
 
-- MAKE SURE THE ARDUINO IS PLUGGED IN
-
-- CLONE/DOWNLOAD THE PROJECT
-
-- DOWNLOAD THE PYTHON DEPENDENCIES
+- Instale as dependências de software listadas acima
+- Conecte o Arduino Leonardo (COM33)
+- Clone/baixe o projeto
+- Instale as dependências Python:
 
 ```bash
 poetry install
 ```
 
-- RUN THE PROJECT
+- Execute o projeto:
 
 ```bash
 poetry run python main.py
 ```
+
+### 🐧 Linux (Linux Lite)
+
+- Instale as dependências do sistema (veja seção acima)
+- Clone/baixe o projeto
+- Instale as dependências Python:
+
+```bash
+poetry install
+```
+
+- Execute o projeto:
+
+```bash
+poetry run python main.py
+```
+
+> 💡 O bot detecta automaticamente o SO e usa `mss` + `pynput` no Linux.
+> Não é necessário nenhum hardware adicional.
 
 ## 🤝 Contributing
 

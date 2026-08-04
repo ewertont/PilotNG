@@ -1,11 +1,7 @@
-import serial
-from time import sleep
-import base64
-
-arduinoSerial = serial.Serial('COM33', 115200, timeout=1)
+# Arduino não é utilizado no modo software (Linux).
+# Este módulo é mantido como stub para compatibilidade com código que eventualmente
+# chame sendCommandArduino. Os comandos são simplesmente ignorados.
 
 def sendCommandArduino(command):
-    commandBytes = command.encode('utf-8')
-    commandBase64 = base64.b64encode(commandBytes).decode('utf-8') + '\n'
-    arduinoSerial.write(commandBase64.encode())
-    sleep(0.01)
+    """No-op: Arduino desabilitado, inputs simulados via pynput."""
+    pass
