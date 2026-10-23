@@ -73,6 +73,33 @@ def crop(image: GrayImage, x: int, y: int, width: int, height: int) -> GrayImage
     return image[y:y + height, x:x + width]
 
 
+import os
+
+_dir_cache = {}
+
+
+def _resolve_case_insensitive_path(path: str) -> str:
+    if os.path.exists(path):
+        return path
+    parent = os.path.dirname(path)
+    if not os.path.exists(parent):
+        return path
+    if parent not in _dir_cache:
+        try:
+            _dir_cache[parent] = {entry.lower(): entry for entry in os.listdir(parent)}
+        except Exception:
+            _dir_cache[parent] = {}
+    basename = os.path.basename(path).lower()
+    actual = _dir_cache[parent].get(basename)
+    if actual:
+        return os.path.join(parent, actual)
+    return path
+
+
 # TODO: add unit tests
 def load(path: str) -> np.ndarray:
-    return np.array(cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB), dtype=np.uint8)
+    resolved_path = _resolve_case_insensitive_path(path)
+    img = cv2.imread(resolved_path)
+    if img is None:
+        raise FileNotFoundError(f"Image not found at path: {path} (resolved: {resolved_path})")
+    return np.array(cv2.cvtColor(img, cv2.COLOR_BGR2RGB), dtype=np.uint8)

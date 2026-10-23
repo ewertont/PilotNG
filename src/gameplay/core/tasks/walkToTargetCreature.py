@@ -1,3 +1,4 @@
+from time import time
 import numpy as np
 from scipy.spatial import distance
 from src.gameplay.typings import Context
@@ -46,6 +47,8 @@ class WalkToTargetCreatureTask(VectorTask):
         return not gameplayUtils.coordinatesAreEqual(context['ng_cave']['targetCreature']['coordinate'], self.targetCreatureCoordinateSinceLastRestart)
 
     def shouldManuallyComplete(self, context: Context) -> bool:
+        if self.startedAt and (time() - self.startedAt < 0.4):
+            return False
         if context['ng_cave']['isAttackingSomeCreature'] == False:
             return True
         return False

@@ -301,7 +301,6 @@ class CavebotPage(customtkinter.CTkToplevel):
     # TODO: verificar se a coordenada é walkable
     def addWaypoint(self, waypointType, options=None, ignore=False, passinho=False):
         screenshot = getScreenshot()
-        Image.fromarray(screenshot).show()
         coordinate = getCoordinate(screenshot)
         
         if coordinate is None:

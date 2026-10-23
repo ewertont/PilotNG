@@ -26,9 +26,17 @@ def getBeingAttackedCreatures(content: GrayImage, filledSlotsCount: int) -> Gene
         if alreadyCalculatedBeingAttackedCreature:
             yield False
         else:
-            # detecting through corner pixels
-            isBeingAttacked = (content[creatureIndex * 22, 0] == 76 or content[contentIndex, 0] == 166) and (content[contentIndex, 19] == 76 or content[contentIndex, 19] == 166) and (
-                content[contentIndex + 19, 0] == 76 or content[contentIndex + 19, 0] == 166) and (content[contentIndex + 19, 19] == 76 or content[contentIndex + 19, 19] == 166)
+            # detecting through corner pixels (76 = red border, 166 = red border with highlight, +/- 1 for linux rendering)
+            c1 = content[contentIndex, 0]
+            c2 = content[contentIndex, 19]
+            c3 = content[contentIndex + 19, 0]
+            c4 = content[contentIndex + 19, 19]
+            isBeingAttacked = (
+                (c1 == 76 or c1 == 77 or c1 == 165 or c1 == 166) and
+                (c2 == 76 or c2 == 77 or c2 == 165 or c2 == 166) and
+                (c3 == 76 or c3 == 77 or c3 == 165 or c3 == 166) and
+                (c4 == 76 or c4 == 77 or c4 == 165 or c4 == 166)
+            )
             yield isBeingAttacked
             if isBeingAttacked:
                 alreadyCalculatedBeingAttackedCreature = True
@@ -49,7 +57,7 @@ def getCreatures(content: GrayImage) -> CreatureList:
         creaturesAfterCheck = checkDust(content, creatures)
         return creaturesAfterCheck
     else:
-        return []
+        return np.array([], dtype=Creature)
 
 
 # PERF: [0.019119499999998624, 4.020000000082291e-05]
@@ -106,11 +114,15 @@ def checkDust(content: GrayImage, creatures: CreatureList):
             creature['name'] = 'Dusted'
     return creatures
 
+def isAttackingSomeCreature(creatures: CreatureList) -> bool:
+    if creatures is None or len(creatures) == 0:
+        return False
+    return _isAttackingSomeCreatureFast(creatures)
+
 # PERF: [4.499999999296733e-06, 9.999999992515995e-07]
 @njit(cache=True, fastmath=True)
-def isAttackingSomeCreature(creatures: CreatureList) -> bool:
-    if creatures is not None and len(creatures) > 0:
-        for isBeingAttacked in creatures['isBeingAttacked']:
-            if isBeingAttacked:
-                return True
+def _isAttackingSomeCreatureFast(creatures: CreatureList) -> bool:
+    for isBeingAttacked in creatures['isBeingAttacked']:
+        if isBeingAttacked:
+            return True
     return False

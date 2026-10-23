@@ -15,6 +15,7 @@ def loadContextFromConfig(config, context):
         comboSpellsItem['currentSpellIndex'] = 0
         context['ng_comboSpells']['items'].append(comboSpellsItem)
     context['healing'] = config['healing'].copy()
+    context['selected_window'] = config.get('selected_window', None)
     return context
 
 def loadNgCfgs(config, context):

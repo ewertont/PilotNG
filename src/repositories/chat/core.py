@@ -51,7 +51,6 @@ def getTabs(screenshot: GrayImage):
 # TODO: add unit tests
 # TODO: add perf
 def hasNewLoot(screenshot: GrayImage) -> bool:
-    print('hasNewLoot:::')
     global oldListOfLootCheck
     lootLines = getLootLines(screenshot)
     if len(lootLines) == 0:
@@ -80,7 +79,6 @@ def resetOldList():
 # TODO: add unit tests
 # TODO: add perf
 def getLootLines(screenshot: GrayImage) -> GrayImage:
-    print('getLootLines:::')
     messageContainerPosition = getChatMessagesContainerPosition(screenshot)
     if messageContainerPosition is None:
         return []

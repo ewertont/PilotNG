@@ -5,7 +5,7 @@ from typing import Union
 from src.shared.typings import Coordinate, GrayImage, GrayPixel, WaypointList
 from src.utils.core import hashit, locate
 from src.utils.coordinate import getCoordinateFromPixel, getPixelFromCoordinate
-from .config import availableTilesFrictions, breakpointTileMovementSpeed, coordinates, dimensions, floorsImgs, floorsLevelsImgsHashes, floorsPathsSqms, nonWalkablePixelsColors, tilesFrictionsWithBreakpoints, walkableFloorsSqms
+from .config import availableTilesFrictions, breakpointTileMovementSpeed, coordinates, dimensions, floorsImgs, floorsLevelsImgs, floorsLevelsImgsHashes, floorsPathsSqms, nonWalkablePixelsColors, tilesFrictionsWithBreakpoints, walkableFloorsSqms
 from .extractors import getRadarImage
 from .locators import getRadarToolsPosition
 from .typings import FloorLevel, TileFriction
@@ -59,7 +59,9 @@ def getCoordinate(screenshot: GrayImage, previousCoordinate: Coordinate = None) 
         xEnd = previousCoordinateXPixel + \
             (dimensions['halfWidth'] + paddingSize)
         areaImgToCompare = floorsImgs[floorLevel][yStart:yEnd, xStart:xEnd]
-        areaFoundImg = locate(areaImgToCompare, radarImage, confidence=0.9)
+        areaFoundImg = locate(areaImgToCompare, radarImage, confidence=0.85)
+        if areaFoundImg is None:
+            areaFoundImg = locate(areaImgToCompare, radarImage, confidence=0.65)
         if areaFoundImg:
             currentCoordinateXPixel = previousCoordinateXPixel - \
                 paddingSize + areaFoundImg[0]
@@ -69,6 +71,8 @@ def getCoordinate(screenshot: GrayImage, previousCoordinate: Coordinate = None) 
                 (currentCoordinateXPixel, currentCoordinateYPixel))
             return (currentCoordinateX, currentCoordinateY, floorLevel)
     imgCoordinate = locate(floorsImgs[floorLevel], radarImage, confidence=0.75)
+    if imgCoordinate is None:
+        imgCoordinate = locate(floorsImgs[floorLevel], radarImage, confidence=0.65)
     if imgCoordinate is None:
         return None
     xImgCoordinate = imgCoordinate[0] + dimensions['halfWidth']
@@ -91,9 +95,20 @@ def getFloorLevel(screenshot: GrayImage) -> FloorLevel | None:
     width = 2
     floorLevelImg = screenshot[top:top + height, left:left + width]
     floorImgHash = hashit(floorLevelImg)
-    if floorImgHash not in floorsLevelsImgsHashes:
-        return None
-    return floorsLevelsImgsHashes[floorImgHash]
+    if floorImgHash in floorsLevelsImgsHashes:
+        return floorsLevelsImgsHashes[floorImgHash]
+    # Robust fallback for Linux / slight anti-aliasing / gamma differences
+    best_floor = None
+    min_diff = float('inf')
+    for floor_idx, ref_img in enumerate(floorsLevelsImgs):
+        diff = np.mean(np.abs(floorLevelImg.astype(np.int16) - ref_img.astype(np.int16)))
+        if diff < min_diff:
+            min_diff = diff
+            best_floor = floor_idx
+    if min_diff < 5.0:
+        floorsLevelsImgsHashes[floorImgHash] = best_floor
+        return best_floor
+    return None
 
 
 # TODO: add unit tests

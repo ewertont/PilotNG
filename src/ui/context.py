@@ -19,6 +19,11 @@ class Context:
         self.context = loadContextFromConfig(
             self.enabledProfile['config'], context)
 
+    def updateSelectedWindow(self, windowTitle: str):
+        self.context['selected_window'] = windowTitle
+        self.enabledProfile['config']['selected_window'] = windowTitle
+        self.db.update(self.enabledProfile)
+
     def updateMainBackpack(self, backpack: str):
         self.context['ng_backpacks']['main'] = backpack
         self.enabledProfile['config']['ng_backpacks']['main'] = backpack
@@ -251,6 +256,23 @@ class Context:
         self.db.update(self.enabledProfile)
 
     def play(self):
+        if self.context['window'] is None:
+            import platform
+            system = platform.system()
+            target_title = self.context.get('selected_window') or self.context.get('window_title')
+            if system == 'Linux':
+                from src.gameplay.core.middlewares.window import _get_tibia_window_linux
+                self.context['window'] = _get_tibia_window_linux(window_title=target_title)
+            else:
+                try:
+                    import pygetwindow as gw
+                    if target_title:
+                        windows = gw.getWindowsWithTitle(target_title)
+                        if len(windows) > 0:
+                            self.context['window'] = windows[0]
+                except Exception:
+                    pass
+
         if self.context['window'] is None:
             messagebox.showerror(
                 'Erro', 'Tibia window is not set!')

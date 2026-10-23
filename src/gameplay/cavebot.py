@@ -17,11 +17,13 @@ def resolveCavebotTasks(context: Context) -> Union[AttackClosestCreatureTask, No
             context['ng_tasksOrchestrator'].setRootTask(
                 context, AttackClosestCreatureTask())
             return context
-        if currentTask is None or context['ng_tasksOrchestrator'].rootTask.name != 'attackClosestCreature':
+        if currentTask is None or context['ng_tasksOrchestrator'].rootTask is None or context['ng_tasksOrchestrator'].rootTask.name != 'attackClosestCreature':
             context['ng_tasksOrchestrator'].setRootTask(
                 context, AttackClosestCreatureTask())
         return context
     if context['ng_cave']['closestCreature'] is None:
+        return context
+    if currentTask is not None and context['ng_tasksOrchestrator'].rootTask is not None and context['ng_tasksOrchestrator'].rootTask.name == 'attackClosestCreature':
         return context
     context['ng_tasksOrchestrator'].setRootTask(
         context, AttackClosestCreatureTask())

@@ -24,10 +24,19 @@ class ConfigPage(customtkinter.CTkToplevel):
         self.tibiaWindowLabel = customtkinter.CTkLabel(self.windowsFrame, text="Game Window:")
         self.tibiaWindowLabel.grid(row=0, column=0, sticky='w', padx=10, pady=(10, 0))
 
+        gameWindows = self.getGameWindows()
         self.windowsCombobox = customtkinter.CTkComboBox(
-            self.windowsFrame, values=self.getGameWindows(), state='readonly',
+            self.windowsFrame, values=gameWindows, state='readonly',
             command=self.onChangeWindow)
         self.windowsCombobox.grid(row=1, column=0, sticky='ew', padx=10, pady=10)
+
+        currentWindow = self.context.context.get('selected_window') or self.context.context.get('window_title')
+        if currentWindow and currentWindow in gameWindows:
+            self.windowsCombobox.set(currentWindow)
+            self.onChangeWindow(currentWindow)
+        elif len(gameWindows) > 0:
+            self.windowsCombobox.set(gameWindows[0])
+            self.onChangeWindow(gameWindows[0])
 
         self.button = customtkinter.CTkButton(
             self.windowsFrame, text='Atualizar', command=self.refreshWindows,
@@ -205,7 +214,11 @@ class ConfigPage(customtkinter.CTkToplevel):
                     try:
                         name = win.get_wm_name() or ''
                         if re.search(r"Tibia", name, re.IGNORECASE):
-                            results.append(name)
+                            wm_class = win.get_wm_class()
+                            if not (wm_class and any(c.lower() in ('thunar', 'mousepad', 'xfce4-terminal', 'code', 'terminal') for c in wm_class)):
+                                geom = win.get_geometry()
+                                if geom.width >= 300 and geom.height >= 300:
+                                    results.append(name)
                     except Exception:
                         pass
                     try:
@@ -235,19 +248,39 @@ class ConfigPage(customtkinter.CTkToplevel):
         return results
 
     def refreshWindows(self):
-        self.windowsCombobox['values'] = self.getGameWindows()
+        windows = self.getGameWindows()
+        self.windowsCombobox.configure(values=windows)
+        current = self.windowsCombobox.get()
+        if current in windows:
+            self.windowsCombobox.set(current)
+            self.onChangeWindow(current)
+        elif len(windows) > 0:
+            self.windowsCombobox.set(windows[0])
+            self.onChangeWindow(windows[0])
 
-    def onChangeWindow(self, _):
+    def onChangeWindow(self, _=None):
         selectedWindow = self.windowsCombobox.get()
+        if not selectedWindow:
+            return
         system = platform.system()
         if system == 'Linux':
-            # No Linux a janela já foi localizada pelo middleware window.py
-            # Aqui apenas armazenamos o título selecionado; o middleware resolve
-            self.context.context['window'] = None  # força re-detecção no próximo ciclo
+            from src.gameplay.core.middlewares.window import _get_tibia_window_linux
+            win = _get_tibia_window_linux(window_title=selectedWindow)
+            if win is not None:
+                self.context.context['window'] = win
+                self.context.context['window_title'] = selectedWindow
+                self.context.updateSelectedWindow(selectedWindow)
+                print(f'[config] Janela vinculada com sucesso: {selectedWindow} (id={hex(win._window_id)})')
+            else:
+                print(f'[config] Janela não encontrada via Xlib: {selectedWindow}')
         else:
             try:
                 import pygetwindow as gw
-                self.context.context['window'] = gw.getWindowsWithTitle(selectedWindow)[0]
+                windows = gw.getWindowsWithTitle(selectedWindow)
+                if len(windows) > 0:
+                    self.context.context['window'] = windows[0]
+                    self.context.context['window_title'] = selectedWindow
+                    self.context.updateSelectedWindow(selectedWindow)
             except Exception as e:
                 print(f'[config] Erro ao obter janela: {e}')
         

@@ -39,6 +39,16 @@ from src.ui.context import Context
 def main():
     _ensure_x11_env()
     contextInstance = Context(context)
+    if platform.system() == 'Linux':
+        from src.gameplay.core.middlewares.window import _get_tibia_window_linux
+        saved_title = contextInstance.context.get('selected_window')
+        tibia_win = _get_tibia_window_linux(window_title=saved_title)
+        if tibia_win:
+            contextInstance.context['window'] = tibia_win
+            contextInstance.context['window_title'] = tibia_win.title
+            print(f'[main] Janela do Tibia vinculada automaticamente: {tibia_win.title}')
+        else:
+            print('[main] Nenhuma janela ativa do Tibia encontrada no momento da inicialização.')
     uiThreadInstance = UIThread(contextInstance)
     uiThreadInstance.start()
     alertThreadInstance = AlertThread(contextInstance)

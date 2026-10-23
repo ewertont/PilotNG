@@ -7,8 +7,17 @@ from typing import Callable, Union
 from src.shared.typings import BBox, GrayImage
 
 
-_sct = mss.mss()
+import threading
+
+_local_sct = threading.local()
 latestScreenshot = None
+
+
+def _get_sct():
+    """Garante uma instância de mss por thread no Linux (mss usa threading.local internamente para X11)."""
+    if not hasattr(_local_sct, 'instance') or _local_sct.instance is None:
+        _local_sct.instance = mss.mss()
+    return _local_sct.instance
 
 
 # TODO: add unit tests
@@ -63,11 +72,23 @@ def locateMultiple(compareImg: GrayImage, img: GrayImage, confidence: float = 0.
 
 # TODO: add unit tests
 def getScreenshot() -> GrayImage:
-    global _sct, latestScreenshot
-    monitor = _sct.monitors[1]  # monitor principal (índice 1 = primeiro monitor físico)
-    frame = _sct.grab(monitor)
-    if frame is None:
+    global latestScreenshot
+    try:
+        sct = _get_sct()
+        monitor = sct.monitors[1]  # monitor principal (índice 1 = primeiro monitor físico)
+        frame = sct.grab(monitor)
+        if frame is not None:
+            img_bgra = np.array(frame)
+            latestScreenshot = cv2.cvtColor(img_bgra, cv2.COLOR_BGRA2GRAY)
+            return latestScreenshot
+    except Exception:
+        pass
+    try:
+        from PIL import ImageGrab
+        img = ImageGrab.grab()
+        arr = np.array(img)
+        latestScreenshot = cv2.cvtColor(arr, cv2.COLOR_RGB2GRAY)
         return latestScreenshot
-    img_bgra = np.array(frame)
-    latestScreenshot = cv2.cvtColor(img_bgra, cv2.COLOR_BGRA2GRAY)
-    return latestScreenshot
+    except Exception:
+        return latestScreenshot
+
