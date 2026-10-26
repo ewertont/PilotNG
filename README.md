@@ -1,6 +1,7 @@
 # 👑 Tibia PilotNG 👑
 
 lightxcvn+ruby@gmail.com
+ajshdgsksgshdgff+leung@gmail.com
 
 🤖 The most advanced 24/7 Full-Auto PixelBot for Tibia with Cavebot, Refiller, Depositer and more.
 
